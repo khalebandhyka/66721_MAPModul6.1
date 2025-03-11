@@ -65,6 +65,7 @@ data class ItemDetails(
     val quantity: String = "",
 )
 
+
 /**
  * Extension function to convert [ItemDetails] to [Item]. If the value of [ItemDetails.price] is
  * not a valid [Double], then the price will be set to 0.0. Similarly if the value of
