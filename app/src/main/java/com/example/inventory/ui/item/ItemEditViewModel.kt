@@ -27,12 +27,21 @@ import com.example.inventory.data.ItemsRepository
  * ViewModel to retrieve and update an item from the [ItemsRepository]'s data source.
  */
 class ItemEditViewModel(
-    savedStateHandle: SavedStateHandle,
-) : ViewModel() {
+    private val savedStateHandle: SavedStateHandle,
+    private val itemsRepository: ItemsRepository
+    ) : ViewModel() {
 
-    /**
-     * Holds current item ui state
-     */
+    fun updateUiState(itemDetails: ItemDetails) {
+        itemUiState =
+            ItemUiState(itemDetails = itemDetails, isEntryValid = validateInput(itemDetails))
+    }
+
+    suspend fun updateItem() {
+        if (validateInput(itemUiState.itemDetails)) {
+            itemsRepository.updateItem(itemUiState.itemDetails.toItem())
+        }
+    }
+
     var itemUiState by mutableStateOf(ItemUiState())
         private set
 

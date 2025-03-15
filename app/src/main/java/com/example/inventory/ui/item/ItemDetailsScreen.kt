@@ -50,6 +50,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 object ItemDetailsDestination : NavigationDestination {
     override val route = "item_details"
@@ -67,6 +69,7 @@ fun ItemDetailsScreen(
     viewModel: ItemDetailsViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -88,14 +91,19 @@ fun ItemDetailsScreen(
                 )
             }
         },
-        modifier = modifier
+        modifier = modifier // Ensure this is placed correctly
     ) { innerPadding ->
         ItemDetailsBody(
-            itemDetailsUiState = uiState, // Use the correct parameter name
-            onSellItem = { },
-            onDelete = { },
-            modifier = modifier
-                .padding(innerPadding)
+            itemDetailsUiState = uiState,
+            onSellItem = { viewModel.reduceQuantityByOne() },
+            onDelete = {
+                coroutineScope.launch {
+                    viewModel.deleteItem()
+                    navigateBack()
+                }
+            },
+            modifier = Modifier
+                .padding(innerPadding) // Move modifier inside function call
                 .padding(
                     start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
                     end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
