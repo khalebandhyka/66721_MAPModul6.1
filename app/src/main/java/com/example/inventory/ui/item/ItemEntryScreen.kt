@@ -2,8 +2,6 @@ package com.example.inventory.ui.item
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -17,6 +15,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
@@ -31,7 +30,6 @@ import com.example.inventory.ui.navigation.NavigationDestination
 import com.example.inventory.ui.theme.InventoryTheme
 import java.util.Currency
 import java.util.Locale
-import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 
 object ItemEntryDestination : NavigationDestination {
@@ -47,6 +45,8 @@ fun ItemEntryScreen(
     canNavigateBack: Boolean = true,
     viewModel: ItemEntryViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
+    val coroutineScope = rememberCoroutineScope() // ✅ Fix: Define coroutineScope here
+
     Scaffold(
         topBar = {
             InventoryTopAppBar(
@@ -59,32 +59,29 @@ fun ItemEntryScreen(
         ItemEntryBody(
             itemUiState = viewModel.itemUiState,
             onItemValueChange = viewModel::updateUiState,
-            onSaveClick = { },
-            modifier = Modifier
-                .padding(
-                    start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
-                    end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
-                    top = innerPadding.calculateTopPadding()
-                )
-                .verticalScroll(rememberScrollState())
-                .fillMaxWidth()
+            onSaveClick = {
+                coroutineScope.launch { // ✅ Now coroutineScope is defined, no more error!
+                    viewModel.saveItem()
+                    navigateBack()
+                }
+            },
+            modifier = Modifier.padding(innerPadding) // ✅ Ensure modifier is used correctly
         )
     }
 }
 
 @Composable
 fun ItemEntryBody(
-
     itemUiState: ItemUiState,
     onItemValueChange: (ItemDetails) -> Unit,
     onSaveClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val coroutineScope = rememberCoroutineScope()
-
     Column(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_large)),
-        modifier = modifier.then(Modifier.padding(dimensionResource(id = R.dimen.padding_medium)))
+        modifier = modifier
+            .padding(dimensionResource(id = R.dimen.padding_medium))
+            .verticalScroll(rememberScrollState())
     ) {
         ItemInputForm(
             itemDetails = itemUiState.itemDetails,
@@ -92,11 +89,7 @@ fun ItemEntryBody(
             modifier = Modifier.fillMaxWidth()
         )
         Button(
-            onClick = {
-                coroutineScope.launch {
-                    onSaveClick()
-                }
-            },
+            onClick = onSaveClick,
             enabled = itemUiState.isEntryValid,
             shape = MaterialTheme.shapes.small,
             modifier = Modifier.fillMaxWidth()
@@ -105,7 +98,6 @@ fun ItemEntryBody(
         }
     }
 }
-
 
 @Composable
 fun ItemInputForm(
@@ -173,10 +165,12 @@ fun ItemInputForm(
 @Composable
 private fun ItemEntryScreenPreview() {
     InventoryTheme {
-        ItemEntryBody(itemUiState = ItemUiState(
-            ItemDetails(
-                name = "Item name", price = "10.00", quantity = "5"
-            )
-        ), onItemValueChange = {}, onSaveClick = {})
+        ItemEntryBody(
+            itemUiState = ItemUiState(
+                ItemDetails(name = "Item name", price = "10.00", quantity = "5")
+            ),
+            onItemValueChange = {},
+            onSaveClick = {}
+        )
     }
 }
